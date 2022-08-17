@@ -49,7 +49,9 @@
 LIBXSMM_APIVAR_DEFINE(volatile LONG internal_trace_initialized);
 #else
 LIBXSMM_APIVAR_DEFINE(volatile int internal_trace_initialized);
+# ifdef __GLIBC__
 # include <execinfo.h>
+# endif
 # if defined(LIBXSMM_TRACE_DLINFO)
 #   include <dlfcn.h>
 # else
@@ -209,6 +211,7 @@ LIBXSMM_API
 unsigned int libxsmm_backtrace(const void* buffer[], unsigned int size, unsigned int skip)
 {
   unsigned int result;
+#ifdef __GLIBC__
   if (NULL != buffer && 0 != size && skip < size) {
     skip += LIBXSMM_TRACE_MINDEPTH;
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -230,6 +233,7 @@ unsigned int libxsmm_backtrace(const void* buffer[], unsigned int size, unsigned
   else {
     result = 0;
   }
+#endif
   return result;
 }
 
@@ -246,7 +250,7 @@ LIBXSMM_API_INLINE const char* internal_trace_get_symbolname(const void* address
     strncpy(map, info.dli_sname, LIBXSMM_TRACE_SYMBOLSIZE - 1);
     result = map;
   }
-#else
+#elif defined(__GLIBC__)
   LIBXSMM_ASSERT(NULL != address && NULL != map);
   backtrace_symbols_fd((void**)&address, 1, fd);
   if (fdoff == lseek(fd, fdoff, SEEK_SET) /* reset map */
